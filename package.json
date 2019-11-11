@@ -1,0 +1,24 @@
+{
+  "name": "musicxml2svg",
+  "version": "1.0.0",
+  "description": "A javascript library for converting MusicXML to SVG",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmathijs/MusicXML2SVG.git"
+  },
+  "keywords": [
+    "javascript",
+    "musicxml",
+    "svg"
+  ],
+  "author": "Diederik Mathijs",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dmathijs/MusicXML2SVG/issues"
+  },
+  "homepage": "https://github.com/dmathijs/MusicXML2SVG#readme"
+}
