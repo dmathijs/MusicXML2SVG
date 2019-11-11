@@ -1,13 +1,11 @@
-import InitializeView from "./javascript/controllers/viewController"
+import RenderXML from "./javascript/controllers/renderingcontroller";
 
 (function(window){
 
     function MusicXML2SVG(){
-        var _meta = {}
-
-        var _viewController = InitializeView()
-        
-        return _meta;
+        // Initialize the rendering
+        RenderXML();
+        // To be extended..
     }
 
     // We need that our library is globally accesible, then we save in the window

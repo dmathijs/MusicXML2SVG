@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/dmathijs/MusicXML2SVG#readme",
   "dependencies": {
+    "http-server": "^0.11.1",
     "webpack": "^4.41.2"
   },
   "devDependencies": {

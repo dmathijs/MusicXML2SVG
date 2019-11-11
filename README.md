@@ -27,5 +27,7 @@ Ultimately the goal is to make the library as flexible and extensible as possibl
 ## Setup for contributors
 
 1. Clone the repository to your local computer.
-2. Develop and run "npm run build" to make webpack perform its magic.
-3. For improvements, feel free to make a PR
+2. Run npm install to install all dependencies.
+3. Develop and run "npm run build" to make webpack perform its magic.
+4. Run http-server in the root of the repository to get an overview of all available examples
+5. For improvements, feel free to make a PR
