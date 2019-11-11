@@ -21,4 +21,11 @@ Ultimately the goal is to make the library as flexible and extensible as possibl
 | ------------- |:-------------:| -----:|
 | 1     | Render full, half, quarter and eight notes in G Major Key | [ ] |
 | 2     | Render rests and all type of notes in G Major Key      | [ ] |
-| 2     | TBD      | [ ] |
+| 3     | TBD      | [ ] |
+
+
+## Setup for contributors
+
+1. Clone the repository to your local computer.
+2. Develop and run "npm run build" to make webpack perform its magic.
+3. For improvements, feel free to make a PR

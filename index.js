@@ -1,8 +1,12 @@
+import InitializeView from "./javascript/controllers/viewController"
+
 (function(window){
 
     function MusicXML2SVG(){
         var _meta = {}
 
+        var _viewController = InitializeView()
+        
         return _meta;
     }
 
