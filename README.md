@@ -19,6 +19,6 @@ Ultimately the goal is to make the library as flexible and extensible as possibl
 
 | Step        | Goal           | Finished  |
 | ------------- |:-------------:| -----:|
-| 1     | Render full, half, quarter and eight notes in G Major Key | [] |
-| 2     | Render rests and all type of notes in G Major Key      | [] |
-| 2     | TBD      | [] |
+| 1     | Render full, half, quarter and eight notes in G Major Key | [ ] |
+| 2     | Render rests and all type of notes in G Major Key      | [ ] |
+| 2     | TBD      | [ ] |
