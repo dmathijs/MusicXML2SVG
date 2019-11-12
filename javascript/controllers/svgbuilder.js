@@ -89,6 +89,8 @@ function _generateMeasures(svgObject, boundingBox, measures, ratio){
     }
 
     _generateText(svgObject, boundingBox.leftBoundary+(7*ratio), _topDistance + (30)*ratio, "&")
+    _generateText(svgObject, boundingBox.leftBoundary+(36*ratio), _topDistance + (30)*ratio, "4")
+    _generateText(svgObject, boundingBox.leftBoundary+(36*ratio), _topDistance + (10)*ratio, "4")
 }
 
 function _drawMargins(svgObject, boundingBox){
