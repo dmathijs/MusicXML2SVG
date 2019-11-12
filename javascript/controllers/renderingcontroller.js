@@ -1,7 +1,16 @@
-import ParseMusicXML from "../helpers/helpers"
+import SVGContainer from "./svgcontainer"
+import XMLParser from "../helpers/XMLParser";
+
+
+export default function RenderingController(){
+    this.xmlParser = new XMLParser()
+
+    this.Render = RenderXML
+    this.FetchMusicXML = FetchMusicXml
+}
 
 // Function responsible for finding the view on page
-export default function RenderXML(){
+export function RenderXML(){
 
     const _renderWindow = document.getElementById("musicxml2svg-container");
 
@@ -9,7 +18,7 @@ export default function RenderXML(){
         console.error("Couldn't locate the musicxml2svg-container.");
     }
 
-    return FetchMusicXml(_renderWindow, RenderView);
+    return this.FetchMusicXML(_renderWindow, RenderView);
 }
 
 // Function responsible for fetching the xml specified in the [data-src]
@@ -34,7 +43,7 @@ function FetchMusicXml(renderWindow, callback){
 
     musicXmlRequest.onreadystatechange=(e)=>{
         if(musicXmlRequest.readyState == musicXmlRequest.DONE && musicXmlRequest.status == 200 && musicXmlRequest.responseText){
-            callback(renderWindow,ParseMusicXML(musicXmlRequest.responseText));
+            callback(renderWindow,this.xmlParser.ParseFromXml(musicXmlRequest.responseText), this.xmlParser);
         }
 
         return;
@@ -42,9 +51,16 @@ function FetchMusicXml(renderWindow, callback){
 }
 
 // Function responsible for the rendering
-// Input: an object which contains:
-// 1. renderWindow: HTMLElement
-function RenderView(renderWindow, musicXMLObject){
+function RenderView(renderWindow, musicXMLObject, xmlParser){
+    console.log(musicXMLObject)
+    // Get page layout information
+    const _scoreParts = musicXMLObject["score-partwise"];
+    const _defaults = _scoreParts.defaults;
+    const _pageSizing = _defaults["page-layout"]
 
-    console.log(musicXMLObject);
+    // Initialize the svgContainer with the window height, width
+    const _svgContainer = new SVGContainer(renderWindow, xmlParser, _pageSizing);
+
+    // set the innerhtml
+    renderWindow.innerHTML = _svgContainer.Generate();
 }

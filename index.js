@@ -1,10 +1,12 @@
-import RenderXML from "./javascript/controllers/renderingcontroller";
+import RenderingController from "./javascript/controllers/renderingcontroller";
 
 (function(window){
 
     function MusicXML2SVG(){
         // Initialize the rendering
-        RenderXML();
+        const _renderingcontroller = new RenderingController();
+
+        _renderingcontroller.Render()
         // To be extended..
     }
 
