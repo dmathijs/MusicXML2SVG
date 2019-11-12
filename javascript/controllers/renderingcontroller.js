@@ -1,4 +1,4 @@
-import SVGContainer from "./svgcontainer"
+import SVGBuilder from "./svgbuilder"
 import XMLParser from "../helpers/XMLParser";
 
 
@@ -59,8 +59,8 @@ function RenderView(renderWindow, musicXMLObject, xmlParser){
     const _pageSizing = _defaults["page-layout"]
 
     // Initialize the svgContainer with the window height, width
-    const _svgContainer = new SVGContainer(renderWindow, xmlParser, _pageSizing);
+    const _svgContainer = new SVGBuilder(renderWindow, xmlParser, _pageSizing);
 
     // set the innerhtml
-    renderWindow.innerHTML = _svgContainer.Generate();
+    renderWindow.innerHTML = _svgContainer.Generate(_scoreParts.part.measure);
 }
