@@ -10,9 +10,11 @@ export default function SVGBuilder(renderWindow, xmlParser, pageSizing){
     // Keep track of the real ratio (sized to DOM)
     this.ratio = CalculateDomRatio(renderWindow, pageSizing)
     this.height = CalculateAndSetWindowHeight(renderWindow, pageSizing, this.ratio)
+
+    setFontSize(renderWindow, this.ratio)
    
     // Keep track of position of measures
-    this.margins = CalculateMeasureMargins(renderWindow, pageSizing["page-margins"][0], this.ratio)
+    this.margins = CalculateMeasureMargins(pageSizing["page-margins"][0], this.ratio)
     this.sheetBoundingBox = CalculateSheetBoundingBox(this.margins, this.width, this.height)
 
     // Initialize SVG
@@ -40,7 +42,7 @@ function CalculateSheetBoundingBox(margins, width, height){
 }
 
 // Re-calculates the margins using the ratio of the viewPort
-function CalculateMeasureMargins(renderWindow, margins, ratio){
+function CalculateMeasureMargins(margins, ratio){
     return{
         "leftMargin":margins["left-margin"]*ratio,
         "rightMargin":margins["right-margin"]*ratio,
@@ -58,6 +60,9 @@ function CalculateDomRatio(renderWindow, pageSizing){
 
 function setRenderWindowHeight(renderWindow, height){
     renderWindow.style.height = `${height}px`;
+}
+function setFontSize(renderWindow, ratio){
+    renderWindow.style["font-size"] = `${36*ratio}px`
 }
 
 function Generate(test_data){
@@ -82,6 +87,8 @@ function _generateMeasures(svgObject, boundingBox, measures, ratio){
 
         _previousMeasureEnd = _endPoint
     }
+
+    _generateText(svgObject, boundingBox.leftBoundary+(7*ratio), _topDistance + (30)*ratio, "&")
 }
 
 function _drawMargins(svgObject, boundingBox){
@@ -101,6 +108,16 @@ function _drawLine(svgObject, x1, y1, x2, y2, strokeWidth = "0.8"){
     "_stroke-width":strokeWidth,
     "_stroke":"black",
     "_fill":"none",
+    }});
+    return svgObject;
+}
+
+function _generateText(svgObject,x1,y1,text){
+    svgObject.svg.g.push({"text":
+    {"_x":x1,
+    "_y":y1,
+    "_fill":"black",
+    "__text":text
     }});
     return svgObject;
 }
