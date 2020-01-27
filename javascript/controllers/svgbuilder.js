@@ -7,6 +7,7 @@ export default function SVGBuilder(renderWindow, xmlParser, pageSizing){
     this.pageSizing = pageSizing
     this.xmlParser = xmlParser
 
+    this.raw_height = pageSizing["page-height"]
     // Keep track of the real ratio (sized to DOM)
     this.ratio = CalculateDomRatio(renderWindow, pageSizing)
     this.height = CalculateAndSetWindowHeight(renderWindow, pageSizing, this.ratio)
@@ -65,11 +66,19 @@ function setFontSize(renderWindow, ratio){
     renderWindow.style["font-size"] = `${36*ratio}px`
 }
 
-function Generate(test_data){
-    _generateMeasures(this.svgObject, this.sheetBoundingBox, test_data, this.ratio)
+function Generate(measures, credits){
+    // Generate the text on the sheet
+    _generateCredits(this.svgObject, this.sheetBoundingBox, credits, this.ratio, this.raw_height)
+    // Generate the measures on the sheet
+    _generateMeasures(this.svgObject, this.sheetBoundingBox, measures, this.ratio)
 
     return this.xmlParser.ParseToXml(this.svgObject)
     // return this.xmlParser.ParseToXml(_drawMargins(this.svgObject, this.sheetBoundingBox))
+}
+
+function _generateCredits(svgObject, boundingBox, credits, ratio, height){
+
+    _generateSansSerifText(svgObject, parseFloat(credits["_default-x"])*ratio, (height - credits["_default-y"])*ratio, credits["__text"], credits["_font-size"])
 }
 
 function _generateMeasures(svgObject, boundingBox, measures, ratio){
@@ -78,19 +87,92 @@ function _generateMeasures(svgObject, boundingBox, measures, ratio){
     const _topDistance = boundingBox.topBoundary + measures[0]["print"]["system-layout"]["top-system-distance"]*ratio
 
     for(let i= 0; i < measures.length; i++){
+        
         let _endPoint = _previousMeasureEnd + parseFloat(measures[i]["_width"])*ratio
-        for(let j = 0; j < 5; j++){
-            _drawLine(svgObject, _previousMeasureEnd, _topDistance + (40/4)*j*ratio, _endPoint, _topDistance + (40/4)*j*ratio)
-            
-        }
-        _drawLine(svgObject, _endPoint, _topDistance,_endPoint, _topDistance + 40*ratio)
-
+        
+        _drawMeasure(svgObject, _previousMeasureEnd, _endPoint, _topDistance, measures[i], ratio)
+        // Draw measure time & cleff
+        
         _previousMeasureEnd = _endPoint
     }
+}
 
-    _generateText(svgObject, boundingBox.leftBoundary+(7*ratio), _topDistance + (30)*ratio, "&")
-    _generateText(svgObject, boundingBox.leftBoundary+(36*ratio), _topDistance + (30)*ratio, "4")
-    _generateText(svgObject, boundingBox.leftBoundary+(36*ratio), _topDistance + (10)*ratio, "4")
+function _drawMeasure(svgObject, start, end, top, measure, ratio){
+
+    for(let j = 0; j < 5; j++){
+        _drawLine(svgObject, start, top + (40/4)*j*ratio, end, top + (40/4)*j*ratio)
+    }
+
+    _drawLine(svgObject, end, top,end, top + 40*ratio)
+
+    if(measure['attributes'] != undefined){
+        // Try to fetch attributes
+        const attributes = measure['attributes']
+
+        if(attributes['time'] != undefined){
+            _drawTimeOnMeasure(svgObject, start, top, attributes['time']['beats'], attributes['time']['beat-type'], ratio)
+        }
+        
+        if(attributes['clef'] != undefined){
+            _generateText(svgObject,start+(7*ratio), top + (30)*ratio, "&")
+        }
+    }
+
+    console.log(measure)
+    // check if only one note
+    if(!Array.isArray(measure['note'])){
+        _drawNote(svgObject, measure['note'], start, top, ratio)
+    }else{
+        // Iterate over notes
+        for(let j = 0; j < measure['note'].length; j++){
+            _drawNote(svgObject, measure['note'][j], start, top, ratio)
+        }
+    }
+
+
+} 
+
+
+function _drawNote(svgObject, note, start, top, ratio){
+
+    if(note['rest'] != undefined){
+        return;
+    }
+
+    var noteStart = start + note['_default-x']*ratio
+    
+    // unpack
+    _generateText(svgObject,noteStart, ..._characterNoteMapping(top, ratio, note))
+}
+
+/*
+* Returns note mapping, height is included...
+*/
+function _characterNoteMapping(top, ratio, note){
+    if(note['duration'] == "8"){
+        return [top + -(note['_default-y'])*ratio,"w"];
+    }else{  
+        let resultArray = [top + -(note['_default-y']-5)*ratio]
+        if(note['stem'] != 'up'){
+            resultArray.push("q".toUpperCase())
+        }else{
+            resultArray.push("q")
+        }
+        return resultArray
+    }
+}
+
+/*
+
+Draw the time of a measure (e.g 4/4)
+svgObject -> the object
+measureStart -> y-coordinate to draw
+timeTop -> top time signature number
+timeBottom -> bottom time signature number
+*/
+function _drawTimeOnMeasure(svgObject, measureStart, topDistance, timeTop, timeBottom, ratio){
+    _generateText(svgObject, measureStart +(40*ratio), topDistance + (30)*ratio, timeTop)
+    _generateText(svgObject, measureStart +(40*ratio), topDistance + (10)*ratio, timeBottom)
 }
 
 function _drawMargins(svgObject, boundingBox){
@@ -119,8 +201,24 @@ function _generateText(svgObject,x1,y1,text){
     {"_x":x1,
     "_y":y1,
     "_fill":"black",
-    "__text":text
+    "__text":text,
+    
     }});
     return svgObject;
+}
+
+function _generateSansSerifText(svgObject, x1, y1, text, size){
+    svgObject.svg.g.push({
+        "text":{
+            "_font-family":"serif",
+            "_x":x1,
+            "_y":y1,
+            "_fill":"black",
+            "__text":text,
+            "_font-size":size,
+            "_dominant-baseline":"hanging",
+            "_text-anchor":"middle"
+        }
+    })
 }
 

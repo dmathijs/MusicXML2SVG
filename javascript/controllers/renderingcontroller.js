@@ -45,8 +45,6 @@ function FetchMusicXml(renderWindow, callback){
         if(musicXmlRequest.readyState == musicXmlRequest.DONE && musicXmlRequest.status == 200 && musicXmlRequest.responseText){
             callback(renderWindow,this.xmlParser.ParseFromXml(musicXmlRequest.responseText), this.xmlParser);
         }
-
-        return;
     }
 }
 
@@ -60,7 +58,6 @@ function RenderView(renderWindow, musicXMLObject, xmlParser){
 
     // Initialize the svgContainer with the window height, width
     const _svgContainer = new SVGBuilder(renderWindow, xmlParser, _pageSizing);
-
     // set the innerhtml
-    renderWindow.innerHTML = _svgContainer.Generate(_scoreParts.part.measure);
+    renderWindow.innerHTML = _svgContainer.Generate(_scoreParts.part.measure, _scoreParts.credit['credit-words']);
 }
