@@ -59,5 +59,5 @@ function RenderView(renderWindow, musicXMLObject, xmlParser){
     // Initialize the svgContainer with the window height, width
     const _svgContainer = new SVGBuilder(renderWindow, xmlParser, _pageSizing);
     // set the innerhtml
-    renderWindow.innerHTML = _svgContainer.Generate(_scoreParts.part.measure, _scoreParts.credit['credit-words']);
+    renderWindow.innerHTML = _svgContainer.Generate(_scoreParts.defaults.scaling, _scoreParts.part.measure, _scoreParts.credit);
 }

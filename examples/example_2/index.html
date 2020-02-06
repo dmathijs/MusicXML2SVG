@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>MusicXML2SVG Example 1</title>
+    <style>
+        @font-face{
+            font-family: "Maestro";
+            src:url("/dist/fonts/Maestro.ttf")
+        }
+        body{
+            background-color:#eee;
+        }
+        .tablature-container{
+            background-color:white;
+            display:block;            
+            width:500px;
+            height:auto;
+            margin:auto;
+            font-family: "Maestro", sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="tablature-container" id="musicxml2svg-container" data-src="example_2.musicxml">
+    
+    </div>
+
+<script src="../../dist/musicxml2svg.js"></script>
+</body>
+</html>
