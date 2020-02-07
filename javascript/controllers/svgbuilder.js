@@ -1,4 +1,5 @@
 import X2JS from "x2js"
+import { GetKeyTenths } from "../helpers/renderingutil"
 
 // SVG Container keeps all svg related
 export default function SVGBuilder(renderWindow, xmlParser, pageSizing){
@@ -122,20 +123,48 @@ function _drawClefTimes(svgObject, start, top, measure, clefData, ratio){
     // Variable that keeps track of new line
     const clefSymbol = "&"
 
+    let last_elem_position = 0;
+
     if(attributes != undefined){    
-        if(attributes['time'] != undefined){
-            _drawTimeOnMeasure(svgObject, start, top, attributes['time']['beat-type'], attributes['time']['beats'], ratio)
-            clefData["measure-up"] = attributes['time']['beat-type']
-            clefData["measure-down"] = attributes['time']['beats']
-        }
-        
+  
         if(attributes['clef'] != undefined){
             _generateText(svgObject,start+(7*ratio), top + (30)*ratio, clefSymbol)
             clefData["clef"] = attributes['clef']
         }
+
+        if(attributes['key'] != undefined){
+            var fifths = parseInt(attributes['key']['fifths'])
+
+            if(fifths != undefined){
+                clefData['tenths'] = GetKeyTenths(fifths)
+                clefData['sharp'] = true
+                for(var i = 0; i <  clefData['tenths'].length; i++){
+                    last_elem_position = last_elem_position + 4
+                    _generateSignatureSharp(svgObject, start + 30*ratio + last_elem_position, top, ratio,  clefData['tenths'][i])
+                }
+                last_elem_position = last_elem_position + 4
+            }
+        }
+
+        if(attributes['time'] != undefined){
+            
+            _drawTimeOnMeasure(svgObject, start + last_elem_position, top, attributes['time']['beat-type'], attributes['time']['beats'], ratio)
+            clefData["measure-up"] = attributes['time']['beat-type']
+            clefData["measure-down"] = attributes['time']['beats']
+        }
+
     }else if(clefData != undefined){
-        _drawTimeOnMeasure(svgObject, start, top, clefData['measure-up'], clefData["measure-down"], ratio)
+        
         _generateText(svgObject, start+(7*ratio), top + (30)*ratio, clefSymbol)
+
+        if(clefData["tenths"].length > 0){
+            if(clefData["sharp"]){
+                for(var i = 0; i <  clefData['tenths'].length; i++){
+                    last_elem_position = last_elem_position + 5
+                    _generateSignatureSharp(svgObject, start + 20*ratio + last_elem_position, top, ratio, clefData["tenths"][i])
+                }
+            }
+        }
     }
 
     return clefData
@@ -211,10 +240,15 @@ function _drawNote(svgObject, note, start, top, ratio, tenths, nextNote, previou
 function _generateRestWidth(start, previousNoteX, nextNoteX, ratio){
     return start + ((parseFloat(previousNoteX) + parseFloat(nextNoteX))/2)*ratio
 }
+
 function _generateRest(svgObject, duration, start, top, ratio, tenths, nextNote, previousNote){
     if(duration == "1"){
         _generateText(svgObject,_generateRestWidth(start, previousNote["_default-x"], nextNote['_default-x'], ratio), top + (tenths/2)*ratio, "ä")
     }
+}
+
+function _generateSignatureSharp(svgObject, start, top, ratio, tenths){
+    _generateText(svgObject,start, top + (tenths)*ratio, "#");
 }
 
 /*
