@@ -1,5 +1,5 @@
 import X2JS from "x2js"
-import { GetKeyTenths } from "../helpers/renderingutil"
+import { GetKeyTenths, CharacterNoteMapping } from "../helpers/renderingutil"
 
 // SVG Container keeps all svg related
 export default function SVGBuilder(renderWindow, xmlParser, pageSizing){
@@ -136,13 +136,14 @@ function _drawClefTimes(svgObject, start, top, measure, clefData, ratio){
             var fifths = parseInt(attributes['key']['fifths'])
 
             if(fifths != undefined){
-                clefData['tenths'] = GetKeyTenths(fifths)
-                clefData['sharp'] = true
-                for(var i = 0; i <  clefData['tenths'].length; i++){
+                clefData['key'] = GetKeyTenths(fifths)
+                if(clefData['key'].fifths != undefined){
+                    for(var i = 0; i <  clefData['key']['fifths'].length; i++){
+                        last_elem_position = last_elem_position + 4
+                        _generateSignature(svgObject, start + 30*ratio + last_elem_position, top, ratio, clefData['key'].tuning, clefData['key']['fifths'][i])
+                    }
                     last_elem_position = last_elem_position + 4
-                    _generateSignatureSharp(svgObject, start + 30*ratio + last_elem_position, top, ratio,  clefData['tenths'][i])
                 }
-                last_elem_position = last_elem_position + 4
             }
         }
 
@@ -157,11 +158,12 @@ function _drawClefTimes(svgObject, start, top, measure, clefData, ratio){
         
         _generateText(svgObject, start+(7*ratio), top + (30)*ratio, clefSymbol)
 
-        if(clefData["tenths"].length > 0){
-            if(clefData["sharp"]){
-                for(var i = 0; i <  clefData['tenths'].length; i++){
+        if(clefData["key"] != undefined && clefData["key"].tuning.length > 0){
+            // If we have key information, proceed..
+            if(clefData["key"]){
+                for(var i = 0; i <  clefData['key'].fifths.length; i++){
                     last_elem_position = last_elem_position + 5
-                    _generateSignatureSharp(svgObject, start + 20*ratio + last_elem_position, top, ratio, clefData["tenths"][i])
+                    _generateSignature(svgObject, start + 20*ratio + last_elem_position, top, ratio, clefData["key"].tuning, clefData["key"].fifths[i])
                 }
             }
         }
@@ -183,11 +185,13 @@ function _drawMeasure(svgObject, start, end, top, measure, tenths, ratio, measur
         var previousClefTime = measureMetaData.clefTime
 
         measureMetaData["clef-time"] = _drawClefTimes(svgObject, start, top, measure, previousClefTime, ratio)
+        // We need a time division to draw our notes
+        measureMetaData["time-division"] = _parseTimeDivision(measure, measureMetaData["time-division"])
     }
 
     // check if only one note, then there won't be an array but an object
     if(!Array.isArray(measure['note'])){
-        _drawNote(svgObject, measure['note'], start, top, ratio, tenths)
+        _drawNote(svgObject, measure['note'], start, top, ratio, tenths, _nextNote, _previousNote, measureMetaData["time-division"])
 
     }else{
         // Iterate over notes
@@ -210,7 +214,7 @@ function _drawMeasure(svgObject, start, end, top, measure, tenths, ratio, measur
                 _previousNote = {'_default-x':start}
             }
 
-            _drawNote(svgObject, measure['note'][j], start, top, ratio, tenths, _nextNote, _previousNote)
+            _drawNote(svgObject, measure['note'][j], start, top, ratio, tenths, _nextNote, _previousNote, measureMetaData["time-division"])
         }
     }
 
@@ -218,8 +222,21 @@ function _drawMeasure(svgObject, start, end, top, measure, tenths, ratio, measur
     return measureMetaData;
 } 
 
+/*
+    Timing of a piece is dependent on the <divsion> tag on a measure
+*/
+function _parseTimeDivision(measure, previousDivision){
+    if(measure['attributes'] != undefined && measure['attributes']['divisions'] != undefined){
+        return parseInt(measure['attributes']['divisions']);
+    }else if(previousDivision != undefined){
+        return previousDivision;
+    }else{
+        return 8;
+    }
+}
 
-function _drawNote(svgObject, note, start, top, ratio, tenths, nextNote, previousNote){
+
+function _drawNote(svgObject, note, start, top, ratio, tenths, nextNote, previousNote, timing){
 
     // There is a rest
     if(note['rest'] != undefined){
@@ -233,7 +250,7 @@ function _drawNote(svgObject, note, start, top, ratio, tenths, nextNote, previou
         _drawLine(svgObject,noteStart-5*ratio, top + -note['_default-y']*ratio, noteStart+18*ratio, top + -note['_default-y']*ratio, 0.6)
     }
     // unpack
-    _generateText(svgObject,noteStart, ..._characterNoteMapping(top, ratio, note))
+    _generateText(svgObject,noteStart, ...CharacterNoteMapping(top, ratio, note, timing))
 }
 
 // Calculates the middle of 2 notes to put the rest
@@ -247,44 +264,12 @@ function _generateRest(svgObject, duration, start, top, ratio, tenths, nextNote,
     }
 }
 
-function _generateSignatureSharp(svgObject, start, top, ratio, tenths){
-    _generateText(svgObject,start, top + (tenths)*ratio, "#");
-}
-
-/*
-* Returns note mapping, height is included...
-*/
-function _characterNoteMapping(top, ratio, note){
-    const duration = note['duration']
-
-    if(duration == "8"){
-        return [top + -(note['_default-y'])*ratio,"w"];
-    }else if(duration == "2"){  
-        let resultArray = [top + -(note['_default-y']-5)*ratio]
-        if(note['stem'] != 'up'){
-            resultArray.push("q".toUpperCase())
-        }else{
-            resultArray.push("q")
-        }
-        return resultArray
-    }else if(duration == "4"){
-        let resultArray = [top + -(note['_default-y']-5)*ratio]
-        if(note['stem'] != 'up'){
-            resultArray.push("h".toUpperCase())
-        }else{
-            resultArray.push("h")
-        }
-        return resultArray
-    }else if(duration == "1"){
-        let resultArray = [top + -(note['_default-y']-5)*ratio]
-        if(note['stem'] != 'up'){
-            resultArray.push("e".toUpperCase())
-        }else{
-            resultArray.push("e")
-        }
-        return resultArray
+function _generateSignature(svgObject, start, top, ratio, tuning, tenths){
+    if(tuning == "sharp"){
+        _generateText(svgObject,start, top + (tenths)*ratio, "#");
+    }else{
+        _generateText(svgObject,start, top + (tenths)*ratio, "b");
     }
-    return []
 }
 
 /*
@@ -343,7 +328,7 @@ function _generateSansSerifText(svgObject, x1, y1, text, size, anchor = "center"
 
     svgObject.svg.g.push({
         "text":{
-            "_font-family":"serif",
+            "_font-family":"sans-serif",
             "_x":x1,
             "_y":y1,
             "_fill":"black",
