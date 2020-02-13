@@ -1,5 +1,5 @@
 import X2JS from "x2js"
-import { GetKeyTenths, CharacterNoteMapping } from "../helpers/renderingutil"
+import { GetKeyTenths, CharacterNoteMapping, CharacterRestMapping, MapNotesToCoords } from "../helpers/renderingutil"
 
 // SVG Container keeps all svg related
 export default function SVGBuilder(renderWindow, xmlParser, pageSizing){
@@ -80,7 +80,6 @@ function Generate(scaling, measures, credits){
 function _generateCredits(svgObject, boundingBox, credits, ratio, height){
 
     if(credits != undefined){
-        console.log(credits)
         if(Array.isArray(credits)){
             for(var i = 0; i < credits.length; i++){
                 credit = credits[i]["credit-words"]
@@ -109,10 +108,11 @@ function _generateMeasures(svgObject, boundingBox, measures, scaling, ratio){
         if(i != 0 && measures[i]["print"] != undefined){
             _topDistance = _topDistance + measures[i]["print"]["system-layout"]["system-distance"]*ratio
             _previousMeasureEnd =  boundingBox.leftBoundary
-            _endPoint = parseFloat(measures[i]["_width"])*ratio
+            _endPoint = _previousMeasureEnd + parseFloat(measures[i]["_width"])*ratio
         }
 
         _previousMeasureState = _drawMeasure(svgObject, _previousMeasureEnd, _endPoint, _topDistance, measures[i], tenths, ratio, _previousMeasureState)
+        
         _previousMeasureEnd = _endPoint
     }
 }
@@ -169,6 +169,7 @@ function _drawClefTimes(svgObject, start, top, measure, clefData, ratio){
         }
     }
 
+    clefData["last-element-position"] = start + 20*ratio + last_elem_position
     return clefData
 }
 
@@ -180,6 +181,8 @@ function _drawMeasure(svgObject, start, end, top, measure, tenths, ratio, measur
 
     _drawLine(svgObject, end, top,end, top + tenths*ratio, 0.6)
 
+    let newLine = false;
+
     // Check wheter we're a new line
     if((measure['print'] != undefined && measure['print']["_new-system"] == "yes") || measure['attributes'] != undefined){
         var previousClefTime = measureMetaData.clefTime
@@ -187,35 +190,18 @@ function _drawMeasure(svgObject, start, end, top, measure, tenths, ratio, measur
         measureMetaData["clef-time"] = _drawClefTimes(svgObject, start, top, measure, previousClefTime, ratio)
         // We need a time division to draw our notes
         measureMetaData["time-division"] = _parseTimeDivision(measure, measureMetaData["time-division"])
+
+        newLine = true;
+    }else{
+        newLine = false;
     }
 
-    // check if only one note, then there won't be an array but an object
-    if(!Array.isArray(measure['note'])){
-        _drawNote(svgObject, measure['note'], start, top, ratio, tenths, _nextNote, _previousNote, measureMetaData["time-division"])
+    // Map the notes to x,y, choords
+    const measureNotes = (measure['note'] instanceof Array ) ? measure['note'] : [measure['note']]
+    const notes = MapNotesToCoords(newLine, measureMetaData["clef-time"]["last-element-position"], start, end, top, tenths, ratio, measureNotes,measureMetaData["time-division"])
 
-    }else{
-        // Iterate over notes
-        for(let j = 0; j < measure['note'].length; j++){
-            
-            var _previousNote = null
-            var _nextNote = null
-            
-            // Determine next note
-            if(j + 1 < measure['note'].length){
-                _nextNote = measure['note'][j+1]
-            }else{
-                // Create a fake note with a position to determine length
-                _nextNote = {'_default-x':(end-start)/ratio}
-            }
-
-            if( j > 0){
-                _previousNote = measure['note'][j-1]
-            }else{
-                _previousNote = {'_default-x':start}
-            }
-
-            _drawNote(svgObject, measure['note'][j], start, top, ratio, tenths, _nextNote, _previousNote, measureMetaData["time-division"])
-        }
+    for(let j = 0; j < notes.length; j++){
+        _drawNote(svgObject, notes[j], ratio);
     }
 
     // return an object with meta data from the measure
@@ -236,21 +222,19 @@ function _parseTimeDivision(measure, previousDivision){
 }
 
 
-function _drawNote(svgObject, note, start, top, ratio, tenths, nextNote, previousNote, timing){
+function _drawNote(svgObject, note, ratio){
 
     // There is a rest
-    if(note['rest'] != undefined){
-        _generateRest(svgObject, note['duration'], start, top, ratio, tenths, nextNote, previousNote)
+    if(note.rest){
+        _generateText(svgObject, note.x, note.y, note.symbol)
         return;
     }
-
-    var noteStart = start + note['_default-x']*ratio
     
-    if((parseFloat(tenths) + parseFloat(note['_default-y']) <= -tenths/4 || parseFloat(note['_default-y']) > 0 ) && parseFloat(note['_default-y'])%(tenths/4) == 0){
-        _drawLine(svgObject,noteStart-5*ratio, top + -note['_default-y']*ratio, noteStart+18*ratio, top + -note['_default-y']*ratio, 0.6)
+    if(note.needsLine){
+        _drawLine(svgObject,note.x-2, note.y + note.noteOffset*ratio, note.x + 7, note.y + note.noteOffset*ratio, 0.6)
     }
     // unpack
-    _generateText(svgObject,noteStart, ...CharacterNoteMapping(top, ratio, note, timing))
+    _generateText(svgObject,note.x, note.y, note.symbol)
 }
 
 // Calculates the middle of 2 notes to put the rest
@@ -258,10 +242,9 @@ function _generateRestWidth(start, previousNoteX, nextNoteX, ratio){
     return start + ((parseFloat(previousNoteX) + parseFloat(nextNoteX))/2)*ratio
 }
 
-function _generateRest(svgObject, duration, start, top, ratio, tenths, nextNote, previousNote){
-    if(duration == "1"){
-        _generateText(svgObject,_generateRestWidth(start, previousNote["_default-x"], nextNote['_default-x'], ratio), top + (tenths/2)*ratio, "ä")
-    }
+function _generateRest(svgObject, duration, start, top, ratio, tenths, nextNote, previousNote,timing){
+    const restCharacter = CharacterRestMapping(top, ratio, duration, timing)
+    _generateText(svgObject,_generateRestWidth(start, previousNote["_default-x"], nextNote['_default-x'], ratio), top + (tenths/2)*ratio, restCharacter)
 }
 
 function _generateSignature(svgObject, start, top, ratio, tuning, tenths){

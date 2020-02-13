@@ -17,11 +17,10 @@ Ultimately the goal is to make the library as flexible and extensible as possibl
 
 ## Roadmap
 
-| Step        | Goal           | Finished  |
-| ------------- |:-------------:| -----:|
-| 1     | Render full, half, quarter and eight notes in G Major Key | [] |
-| 2     | Render rests and all type of notes in G Major Key      | [ ] |
-| 3     | TBD      | [ ] |
+- [x] Render full, half, quarter and eight notes in G Major key
+- [ ] Render full, half, quarter and eight rests in G Major key
+- [ ] Make rendering 'division' (time) aware
+- ...
 
 
 ## Setup for contributors
